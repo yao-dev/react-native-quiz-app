@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaView, Text } from 'react-native';
 
 const styles = {
@@ -21,14 +21,20 @@ const styles = {
 }
 
 const WaitPlayer = ({ navigation, ...props }) => {
+  const [players, setPlayers] = useState([])
   // Listen new player
   useEffect(() => {
-    io.on('join', player => console.log(player))
+    io.on('join', (player) => {
+      setPlayers(players => players.push(player))
+    })
   }, [])
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <Text style={styles.title}>quiz</Text>
+      {players.map((player) => {
+        return <Text key={player.id} style={styles.title}>{player.username}</Text>
+      })}
     </SafeAreaView>
   );
 }

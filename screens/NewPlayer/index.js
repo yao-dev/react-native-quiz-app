@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { get } from 'lodash';
 import React, { useState } from 'react';
-import { Dimensions, Image, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, KeyboardAvoidingView, SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,10 +35,9 @@ const Button = ({ style = {}, children, ...restProps }) => {
 const styles = {
   safeAreaView: {
     flex: 1,
-    marginTop: Constants.statusBarHeight
   },
   title: {
-    marginTop: 50,
+    paddingTop: 50 + Constants.statusBarHeight,
     fontSize: 40,
     fontWeight: 'bold',
     textTransform: 'uppercase',
@@ -67,10 +66,10 @@ const styles = {
     borderColor: '#6c63ff',
     color: '#6c63ff',
     backgroundColor: '#FFF',
-    fontSize: 25,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 10
+    marginBottom: 10,
   },
   buttonContainer: {
     flex: 1,
@@ -87,50 +86,61 @@ const NewPlayer = ({ navigation, ...props }) => {
     const newGameId = Math.random().toString(36).substr(2).toUpperCase();
 
     if (get(navigation, 'state.params.creator')) {
+      // CREATE NEW GAME
       io.emit('newGame', {
         id: newGameId,
         url: get(navigation, 'state.params.url'),
       })
 
+      // JOIN THE GAME
       io.emit('join', {
         username,
         gameId: newGameId,
       })
 
+      // GO TO INVITE PLAYER
       return navigation.navigate('InvitePlayer', {
         id: newGameId,
         url: get(navigation, 'state.params.url'),
       })
     }
 
+    // JOIN THE GAME
     io.emit('join', {
       username,
       gameId: newGameId,
     })
 
+    // GO TO INVITE WAIT PLAYER
     return navigation.navigate('WaitPlayer')
   }
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
-      {/* TITLE */}
-      <Text style={styles.title}>create player</Text>
-      {/* QUIZ IMAGE */}
-      <View style={styles.imageContainer}>
-        <Image resizeMode='contain' style={styles.image} source={require('../../assets/new-player.png')} />
-      </View>
-      {/* INPUT & BUTTON */}
-      <View style={styles.buttonContainer}>
-        <TextInput
-          placeholder='Type your username'
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-        />
-        <Button onPress={joinGame}>
-          save
-        </Button>
-      </View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior='padding' enabled>
+        <ScrollView contentContainerStyle={{ flex: 1 }}>
+          {/* TITLE */}
+          <Text style={styles.title}>create player</Text>
+          {/* QUIZ IMAGE */}
+          <View style={styles.imageContainer}>
+            <Image resizeMode='contain' style={styles.image} source={require('../../assets/new-player.png')} />
+          </View>
+          {/* INPUT & BUTTON */}
+          <View style={styles.buttonContainer}>
+            <TextInput
+              placeholder='USERNAME'
+              style={styles.input}
+              autoCapitalize='none'
+              autoCorrect={false}
+              onChangeText={setUsername}
+              onSubmitEditing={joinGame}
+            />
+            <Button onPress={joinGame}>
+              save
+            </Button>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

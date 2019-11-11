@@ -26,7 +26,7 @@ const Splash = ({ navigation, ...props }) => {
   // Connect to socket
   useEffect(() => {
     // http://f27bd88d.ngrok.io -> http://localhost:3000
-    const socket = io('http://f27bd88d.ngrok.io');
+    const socket = io('http://f28f7f4f.ngrok.io');
 
     socket.connect();
     socket.on('connect', () => {

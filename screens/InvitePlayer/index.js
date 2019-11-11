@@ -102,7 +102,7 @@ const InvitePlayer = ({ navigation, ...props }) => {
     setGameId(navigation.state.params.id)
     const deepUrl = Linking.makeUrl('quiz-app://game/' + navigation.state.params.id)
     setShareUrl(deepUrl)
-    console.log({ deepUrl })
+    console.log(deepUrl)
   }, [])
 
   const copyToClipboard = () => {
