@@ -1,54 +1,46 @@
 import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
+/**
+ * Disorder the array
+ *
+ * @param {bool} preserve Returns a copy without modifying the original
+ * @return {array} The disordered array
+ */
+Array.prototype.disorder = function (preserve) {
+	var array = preserve ? this.slice() : this;
+	var disordered = [];
 
-const buttonStyles = {
-  button: {
-    flexFlow: 'row wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#6c63ff',
-    width: '80%',
-    maxWidth: '80%',
-    paddingVertical: 10,
-    borderRadius: 50,
-    elevation: 5,
-  },
-  text: {
-    textTransform: 'capitalize',
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  }
-}
+	while(array.length > 0) {
+		var index = Math.round(Math.random()*(array.length-1));
+		disordered.push(array[index]);
+		array.splice(index, 1);
+	}
 
-const Button = ({ style = {}, children, ...restProps }) => {
-  return (
-    <TouchableOpacity {...restProps} style={[buttonStyles.button, style]}>
-      {typeof children !== 'string' ? children : (
-        <Text style={buttonStyles.text}>{children}</Text>
-      )}
-    </TouchableOpacity>
-  )
-}
+	if(!preserve) {
+		Array.prototype.push.apply(this, disordered);
+	}
 
-const styles = {
-  title: {
-    marginTop: 50,
-    fontSize: 30,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    color: '#6c63ff',
-  },
-}
+	return disordered;
+};
 
 const fetchData = async (url) => {
   try {
     const { data } = await axios.get(url);
-    return data.results || []
+    let results = []
+
+    if (data.results) {
+      results = data.results.map((result) => {
+        result.answers = [result.correct_answer].concat(result.incorrect_answers);
+        result.answers.disorder();
+
+        delete result.incorrect_answers;
+
+        return result;
+      })
+    }
+    return results;
   } catch (e){
     console.log(e)
     return []
@@ -70,7 +62,12 @@ const LoadCategory = ({ navigation, ...props }) => {
   useEffect(() => {
     if (!time) {
       clearTimeout(timerRef.current)
-      navigation.navigate('Game', { gameData })
+
+      if (gameData.length) {
+        navigation.navigate('Game', { gameData })
+      } else {
+        navigation.navigate('SelectCategory')
+      }
     }
 
     timerRef.current = setTimeout(() => {

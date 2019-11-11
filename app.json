@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "quiz",
+    "scheme": "quiz-app",
     "slug": "react-native-quiz-app",
     "privacy": "public",
     "sdkVersion": "35.0.0",
@@ -25,6 +26,24 @@
     ],
     "ios": {
       "supportsTablet": true
+    },
+    "android": {
+      "permissions": [
+        "VIBRATE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "https",
+            "host": "*.myapp.io"
+          },
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     }
   }
 }

@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { get } from 'lodash';
 import React from 'react';
 import { Dimensions, SafeAreaView, ScrollView, Text, TouchableOpacity } from 'react-native';
 
@@ -47,11 +48,11 @@ const categories = [
   },
   {
     "value": "18",
-    "text": "Science: Computers"
+    "text": "Computers"
   },
   {
     "value": "19",
-    "text": "Science: Mathematics"
+    "text": "Mathematics"
   },
   {
     "value": "20",
@@ -95,7 +96,7 @@ const categories = [
   },
   {
     "value": "30",
-    "text": "Science: Gadgets"
+    "text": "Gadgets"
   },
   {
     "value": "31",
@@ -140,7 +141,6 @@ const Button = ({ style = {}, children, ...restProps }) => {
 const styles = {
   safeAreaView: {
     flex: 1,
-    marginTop: Constants.statusBarHeight
   },
   firstButton: {
     marginBottom: 10
@@ -154,16 +154,26 @@ const SelectCategory = ({ navigation, ...props }) => {
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'center',
+          paddingTop: Constants.statusBarHeight
         }}
         showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         {categories.map((category) => {
           return (
             <Button
               key={category.value}
-              onPress={() => navigation.navigate('LoadCategory', {
-                url: `https://opentdb.com/api.php?amount=10&category=${category.value}`
-              })}
+              onPress={() => {
+                if (get(navigation, 'state.params.mode') === 'MULTI_PLAYER') {
+                  return navigation.navigate('NewPlayer', {
+                    url: `https://opentdb.com/api.php?amount=10&category=${category.value}`,
+                    creator: true
+                  })
+                }
+                navigation.navigate('LoadCategory', {
+                  url: `https://opentdb.com/api.php?amount=10&category=${category.value}`
+                })
+              }}
               style={styles.firstButton}
             >
               {category.text}

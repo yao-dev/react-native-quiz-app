@@ -73,7 +73,7 @@ const Home = ({ navigation, ...props }) => {
       <Text style={styles.title}>quiz</Text>
       {/* QUIZ IMAGE */}
       <View style={styles.imageContainer}>
-        <Image resizeMode='center' style={styles.image} source={require('../../assets/home-quiz.png')} />
+        <Image resizeMode='contain' style={styles.image} source={require('../../assets/home-quiz.png')} />
       </View>
       {/* BUTTONS */}
       <View style={styles.buttonContainer}>
@@ -83,7 +83,11 @@ const Home = ({ navigation, ...props }) => {
         >
           single player
         </Button>
-        <Button>multi player</Button>
+        <Button
+          onPress={() => navigation.navigate('SelectCategory', { mode: 'MULTI_PLAYER' })}
+        >
+          multi player
+        </Button>
       </View>
     </SafeAreaView>
   );

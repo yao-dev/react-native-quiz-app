@@ -81,7 +81,7 @@ const EndGame = ({ navigation, ...props }) => {
           onPress={() => navigation.navigate('Home')}
           style={styles.firstButton}
         >
-          new gane
+          new game
         </Button>
       </View>
     </SafeAreaView>
