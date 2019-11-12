@@ -94,15 +94,10 @@ const InvitePlayer = ({ navigation, ...props }) => {
 
   // Generate Game ID
   useEffect(() => {
-    // const newGameId = Math.random().toString(36).substr(2).toUpperCase();
-    // io.emit('newGame', {
-    //   id: newGameId,
-    //   url: navigation.state.params.url,
-    // })
     setGameId(navigation.state.params.id)
     const deepUrl = Linking.makeUrl('quiz-app://game/' + navigation.state.params.id)
     setShareUrl(deepUrl)
-    console.log(deepUrl)
+    // console.log(deepUrl)
   }, [])
 
   const copyToClipboard = () => {
@@ -162,9 +157,9 @@ const InvitePlayer = ({ navigation, ...props }) => {
           share
         </Button>
         <Button
-          onPress={() => navigation.navigate('WaitPlayer')}
+          onPress={() => navigation.navigate('WaitPlayer', { gameId })}
         >
-          Start 🎮🕹
+          Next 🎮🕹
         </Button>
       </View>
       <Toast

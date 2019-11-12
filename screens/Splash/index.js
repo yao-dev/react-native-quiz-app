@@ -2,7 +2,6 @@ import { Linking } from 'expo';
 import Constants from 'expo-constants';
 import React, { useEffect } from 'react';
 import { SafeAreaView, Text } from 'react-native';
-import io from 'socket.io-client';
 
 const styles = {
   safeAreaView: {
@@ -23,29 +22,20 @@ const styles = {
 }
 
 const Splash = ({ navigation, ...props }) => {
-  // Connect to socket
   useEffect(() => {
-    // http://f27bd88d.ngrok.io -> http://localhost:3000
-    const socket = io('http://f28f7f4f.ngrok.io');
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        const { path } = Linking.parse(url);
+        const [,route] = path ? path.split('//') : [, '/']
 
-    socket.connect();
-    socket.on('connect', () => {
-      console.log('connected to socket server');
-      Linking.getInitialURL().then((url) => {
-        if (url) {
-          const { path } = Linking.parse(url);
-          const [,route] = path ? path.split('//') : [, '/']
-
-          if (route.includes('game/')) {
-            const [, gameId] = route.split('/')
-            navigation.navigate('NewPlayer', { gameId })
-          } else {
-            navigation.navigate('Home')
-          }
+        if (route && route.includes('game/')) {
+          const [, gameId] = route.split('/')
+          navigation.navigate('NewPlayer', { gameId })
+        } else {
+          navigation.navigate('Home')
         }
-      }).catch(err => console.error('An error occurred', err));
-    });
-    global.io = socket;
+      }
+    }).catch(err => console.error('An error occurred', err));
   }, [])
 
   return (

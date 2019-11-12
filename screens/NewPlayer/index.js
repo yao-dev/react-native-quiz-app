@@ -2,6 +2,9 @@ import Constants from 'expo-constants';
 import { get } from 'lodash';
 import React, { useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { connect } from 'react-redux';
+import actions from '../../redux/actions/game';
+import game from '../../utils/game';
 
 const { width, height } = Dimensions.get('window');
 
@@ -82,37 +85,34 @@ const styles = {
 const NewPlayer = ({ navigation, ...props }) => {
   const [username, setUsername] = useState('')
 
-  const joinGame = () => {
-    const newGameId = Math.random().toString(36).substr(2).toUpperCase();
+  const joinGame = async () => {
+    let gameId = get(navigation, 'state.params.gameId');
 
     if (get(navigation, 'state.params.creator')) {
-      // CREATE NEW GAME
-      io.emit('newGame', {
-        id: newGameId,
-        url: get(navigation, 'state.params.url'),
-      })
-
+      const categoryUrl = get(navigation, 'state.params.url')
+      gameId = await game.create(categoryUrl)
       // JOIN THE GAME
-      io.emit('join', {
+      game.addPlayer({
+        owner: true,
         username,
-        gameId: newGameId,
+        gameId,
       })
 
       // GO TO INVITE PLAYER
       return navigation.navigate('InvitePlayer', {
-        id: newGameId,
+        id: gameId,
         url: get(navigation, 'state.params.url'),
       })
     }
 
     // JOIN THE GAME
-    io.emit('join', {
+    game.addPlayer({
       username,
-      gameId: newGameId,
+      gameId,
     })
 
     // GO TO INVITE WAIT PLAYER
-    return navigation.navigate('WaitPlayer')
+    return navigation.navigate('WaitPlayer', { gameId })
   }
 
   return (
@@ -149,4 +149,13 @@ NewPlayer.navigationOptions = {
   header: null
 }
 
-export default NewPlayer;
+const mapDispatchToProps = (dispatch) => {
+  return {
+    gamePlayersUpdate: (gameUpdated) => dispatch(actions.gamePlayersUpdate(gameUpdated))
+  }
+}
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(NewPlayer);
