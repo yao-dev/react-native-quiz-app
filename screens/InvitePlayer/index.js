@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Clipboard, Dimensions, Image, SafeAreaView, Share, Text, TouchableOpacity, Vibration, View } from 'react-native';
 import Toast from 'react-native-root-toast';
 import Button from '../../components/Button';
+import { db } from '../../utils/firebase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -135,7 +136,15 @@ const InvitePlayer = ({ navigation, ...props }) => {
         <Button
           background='purple'
           color='white'
-          onPress={() => navigation.navigate('WaitPlayer', { gameId })}
+          onPress={() => {
+            db.ref('/games').child(gameId).once('value', (snapshot) => {
+              if (snapshot.val().started) {
+                navigation.navigate('LoadCategory', { gameId })
+              } else {
+                navigation.navigate('WaitPlayer', { gameId })
+              }
+            })
+          }}
         >
           Next 🎮🕹
         </Button>

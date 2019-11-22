@@ -1,4 +1,4 @@
-import { GAME_PLAYERS_UPDATE, SET_GAME_ID, SET_PLAYER_ID } from "../constants"
+import { END_GAME, GAME_PLAYERS_UPDATE, SET_GAME_ID, SET_PLAYER_ID } from "../constants"
 
 const setGameId = (gameId) => {
   return {
@@ -28,8 +28,15 @@ const gamePlayersUpdate = ({ gameId, players }) => {
   }
 }
 
+const endGame = () => {
+  return {
+    type: END_GAME
+  }
+}
+
 export default {
   gamePlayersUpdate,
   setGameId,
-  setPlayerId
+  setPlayerId,
+  endGame
 }

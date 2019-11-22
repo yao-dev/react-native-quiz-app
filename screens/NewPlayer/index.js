@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { connect } from 'react-redux';
 import actions from '../../redux/actions/game';
+import { db } from '../../utils/firebase';
 import game from '../../utils/game';
 
 const { width, height } = Dimensions.get('window');
@@ -19,6 +20,9 @@ const buttonStyles = {
     paddingVertical: 10,
     borderRadius: 50
   },
+  disabled: {
+    opacity: 0.6
+  },
   text: {
     textTransform: 'capitalize',
     color: '#FFF',
@@ -29,7 +33,7 @@ const buttonStyles = {
 
 const Button = ({ style = {}, children, ...restProps }) => {
   return (
-    <TouchableOpacity {...restProps} style={[buttonStyles.button, style]}>
+    <TouchableOpacity {...restProps} style={[buttonStyles.button, style, restProps.disabled && buttonStyles.disabled]}>
       <Text style={buttonStyles.text}>{children}</Text>
     </TouchableOpacity>
   )
@@ -89,6 +93,8 @@ const NewPlayer = ({ navigation, ...props }) => {
   const isCreator = get(navigation, 'state.params.creator')
   const categoryUrl = get(navigation, 'state.params.url')
 
+  const submitDisabled = !username.trim().length;
+
   const joinGame = async () => {
     // JOIN THE GAME
     props.addPlayer({
@@ -96,8 +102,13 @@ const NewPlayer = ({ navigation, ...props }) => {
       gameId,
     })
 
-    // GO TO INVITE WAIT PLAYER
-    return navigation.navigate('WaitPlayer', { gameId })
+    db.ref('/games').child(gameId).once('value', (snapshot) => {
+      if (snapshot.val().started) {
+        navigation.navigate('LoadCategory', { gameId })
+      } else {
+        navigation.navigate('WaitPlayer', { gameId })
+      }
+    })
   }
 
   // GO TO INVITE PLAYER
@@ -117,6 +128,8 @@ const NewPlayer = ({ navigation, ...props }) => {
   }, [props.game.id])
 
   const onSubmit = async () => {
+    if (submitDisabled) return;
+
     if (isCreator) {
       await props.createGame(categoryUrl)
     } else {
@@ -144,7 +157,10 @@ const NewPlayer = ({ navigation, ...props }) => {
               onChangeText={setUsername}
               onSubmitEditing={onSubmit}
             />
-            <Button onPress={onSubmit}>
+            <Button
+              onPress={onSubmit}
+              disabled={submitDisabled}
+            >
               save
             </Button>
           </View>

@@ -3,6 +3,7 @@ import { get } from 'lodash';
 import React from 'react';
 import { Dimensions, SafeAreaView, ScrollView } from 'react-native';
 import Button from '../../components/Button';
+import { BASE_CATEGORY_URL } from '../constants';
 
 const { width, height } = Dimensions.get('window');
 
@@ -119,6 +120,19 @@ const styles = {
 }
 
 const SelectCategory = ({ navigation, ...props }) => {
+  const handleNavigation = (category) => {
+    if (get(navigation, 'state.params.mode') === 'MULTI_PLAYER') {
+      return navigation.navigate('NewPlayer', {
+        url: `${BASE_CATEGORY_URL}${category.value}`,
+        creator: true
+      })
+    }
+    navigation.navigate('LoadCategory', {
+      url: `${BASE_CATEGORY_URL}${category.value}`,
+      mode: 'SINGLE_PLAYER'
+    })
+  }
+
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <ScrollView
@@ -136,17 +150,7 @@ const SelectCategory = ({ navigation, ...props }) => {
               background='purple'
               color='white'
               key={category.value}
-              onPress={() => {
-                if (get(navigation, 'state.params.mode') === 'MULTI_PLAYER') {
-                  return navigation.navigate('NewPlayer', {
-                    url: `https://opentdb.com/api.php?amount=10&category=${category.value}`,
-                    creator: true
-                  })
-                }
-                navigation.navigate('LoadCategory', {
-                  url: `https://opentdb.com/api.php?amount=10&category=${category.value}`
-                })
-              }}
+              onPress={() => handleNavigation(category)}
               textStyle={{ fontSize: 16 }}
               style={styles.firstButton}
             >

@@ -1,9 +1,10 @@
 import Constants from 'expo-constants';
 import React, { useState } from 'react';
-import { Dimensions, Image, Modal, SafeAreaView, Text, TextInput, View } from 'react-native';
+import { Alert, Dimensions, Image, Modal, Platform, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { connect } from 'react-redux';
 import Button from '../../components/Button';
 import actions from '../../redux/actions/game';
+import { db } from '../../utils/firebase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -68,12 +69,33 @@ const styles = {
 
 const Home = ({ navigation, ...props }) => {
   const [modal, setModal] = useState(false);
-  const [gameId, setGameId] = useState();
+  const [gameId, setGameId] = useState('');
+
+  const gameNotFound = () => {
+    // Game doesn't exist
+    return Alert.alert(
+      'Not Found',
+      'The game ID may not exist',
+      [
+        {text: 'OK', onPress: () => true},
+      ],
+    );
+  }
 
   const joinGame = () => {
-    setModal(false)
-    props.setGameId(gameId)
-    navigation.navigate('NewPlayer', { gameId })
+    try {
+      db.ref('/games').child(gameId).once('value', (snapshot) => {
+        if (!snapshot.val()) return gameNotFound()
+
+        setModal(false)
+        props.setGameId(gameId)
+        navigation.navigate('NewPlayer', { gameId })
+
+      })
+    } catch (e) {
+      console.log(e)
+      return gameNotFound()
+    }
   }
 
   return (
@@ -115,7 +137,7 @@ const Home = ({ navigation, ...props }) => {
         // animationType="slide"
         transparent={false}
         visible={modal}
-        onRequestClose={() => {}}
+        onRequestClose={() => setModal(false)}
         style={{ flex: 1 }}
       >
         <View style={{ flex: 1 }}>
@@ -137,6 +159,42 @@ const Home = ({ navigation, ...props }) => {
               join
             </Button>
           </View>
+
+          <TouchableOpacity
+            onPress={() => setModal(false)}
+            style={{
+              width: 75,
+              height: 75,
+              borderRadius: 75,
+              backgroundColor: '#6c63ff',
+              justifyContent: 'center',
+              alignItems: 'center',
+              alignSelf: 'center',
+              marginBottom: 40,
+              ...Platform.select({
+                ios: {
+                  shadowOffset: {
+                    width: 4,
+                    height: 4,
+                  },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 3,
+                },
+                android: {
+                  elevation: 5,
+                }
+              }),
+            }}
+          >
+            <Text
+              style={{
+                color: '#FFF',
+                fontSize: 30,
+              }}
+            >
+              X
+            </Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </SafeAreaView>

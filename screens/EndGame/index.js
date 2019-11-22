@@ -1,10 +1,10 @@
 import Constants from 'expo-constants';
-import { sortBy } from 'lodash';
 import moment from 'moment';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, SafeAreaView, Text, View } from 'react-native';
 import { connect } from 'react-redux';
 import Button from '../../components/Button';
+import actions from '../../redux/actions/game';
 import { db } from '../../utils/firebase';
 import game from '../../utils/game';
 
@@ -45,27 +45,27 @@ const styles = {
   }
 }
 
-// [
-//   Object {
-//     "gameId": "7",
-//     "id": "-LuFDhQ6mvzb6rOWFy-M",
-//     "owner": true,
-//     "points": 30,
-//     "username": "wr",
-//   },
-// ]
-
 const EndGame = ({ navigation, ...props }) => {
   const [players, setPlayers] = useState([])
-  const gameRef = db.ref('/games').child(props.game.id)
+  const gameRef = db.ref('/games').child(navigation.state.params.gameId)
   const playersRef = gameRef.child('players')
 
   useEffect(() => {
-    playersRef.on('value', (snapshot) => {
-      let players = snapshot.val()
-      players = sortBy(game.formatPlayers(players), ['points', 'scoreTime']);
-      setPlayers(players)
-    })
+    props.endGame()
+  }, [])
+
+  useEffect(() => {
+    try {
+      playersRef.on('value', (snapshot) => {
+        let players = snapshot.val()
+        players = game.formatPlayers(players).sort((a, b) => {
+          return !(a.points - b.points) && a.scoreTime - b.scoreTime
+        });
+        setPlayers(players)
+      })
+    } catch (e) {
+      console.error('EndGame - useEffect', e)
+    }
   }, [])
 
   return (
@@ -80,7 +80,7 @@ const EndGame = ({ navigation, ...props }) => {
       <View style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
         {players.map((player, index) => {
           return (
-            <View key={player.id} style={{ width: '80%', flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View key={player.id} style={{ width: '70%', flexDirection: 'row', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row' }}>
                 <Text>{index + 1}. {player.username} {player.points}</Text>
                 <Text>{player.gameComplete && !index && '🏆'}</Text>
@@ -114,6 +114,13 @@ EndGame.navigationOptions = {
   header: null
 }
 
+const mapDispatchToProps = (dispatch) => {
+  return {
+    endGame: () => dispatch(actions.endGame())
+  }
+}
+
 export default connect(
-  state => state
+  state => state,
+  mapDispatchToProps
 )(EndGame);

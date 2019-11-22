@@ -1,4 +1,4 @@
-import { GAME_PLAYERS_UPDATE, SET_GAME_ID, SET_PLAYER_ID } from "../constants";
+import { END_GAME, GAME_PLAYERS_UPDATE, SET_GAME_ID, SET_PLAYER_ID } from "../constants";
 
 const initialState = {
   id: null,
@@ -19,21 +19,21 @@ const appReducer = (state = initialState, action) => {
         playerId: action.payload.playerId,
       }
     case GAME_PLAYERS_UPDATE: {
-      // const gameId = action.payload.gameId;
       const players = action.payload.players;
-      // const currentGame = state[gameId] || {};
 
       const newState = {
         ...state,
         ...currentGame,
         players,
-        // [gameId]: {
-        //   ...currentGame,
-        //   players
-        // }
       }
       return newState;
     }
+    case END_GAME:
+      return {
+        ...state,
+        id: null,
+        playerId: null
+      }
     default:
       return state
   }

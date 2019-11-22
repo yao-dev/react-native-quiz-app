@@ -1,4 +1,4 @@
-import { createAppContainer } from 'react-navigation';
+import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import EndGameScreen from './screens/EndGame';
 import GameScreen from './screens/Game';
@@ -10,27 +10,41 @@ import SelectCategoryScreen from './screens/SelectCategory';
 import SplashScreen from './screens/Splash';
 import WaitPlayerScreen from './screens/WaitPlayer';
 
+const GameStack = createStackNavigator({
+  Game: GameScreen,
+})
 
-const AppNavigator = createStackNavigator(
+const LoadCategoryStack = createStackNavigator({
+  LoadCategory: LoadCategoryScreen,
+})
+
+const EndGameStack = createStackNavigator({
+  EndGame: EndGameScreen,
+})
+
+const AppStack = createStackNavigator(
   {
     Home: HomeScreen,
-    Game: GameScreen,
-    EndGame: EndGameScreen,
     SelectCategory: SelectCategoryScreen,
-    LoadCategory: LoadCategoryScreen,
     NewPlayer: {
       screen: NewPlayerScreen,
       path: 'game/:gameId',
     },
     InvitePlayer: InvitePlayerScreen,
     WaitPlayer: WaitPlayerScreen,
-    Splash: SplashScreen
+  },
+);
+
+const AppContainer = createAppContainer(createSwitchNavigator({
+    Splash: SplashScreen,
+    GameStack,
+    LoadCategoryStack,
+    EndGameStack,
+    AppStack
   },
   {
     initialRouteName: 'Splash',
   }
-);
-
-const AppContainer = createAppContainer(AppNavigator);
+));
 
 export default AppContainer;

@@ -1,10 +1,11 @@
 import moment from 'moment';
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, Text, Vibration, View } from 'react-native';
 import ProgressBar from 'react-native-progress/Bar';
 import { connect } from 'react-redux';
 import Button from '../../components/Button';
 import { db } from '../../utils/firebase';
+import { SECOND_PER_QUESTION } from '../constants';
 
 const { width } = Dimensions.get('window');
 
@@ -20,7 +21,6 @@ const letters = {
 const styles = {
   container: {
     margin: 20,
-    // marginHorizontal: 10,
   },
   quizInfo: {
     flexDirection: 'row',
@@ -75,7 +75,7 @@ const styles = {
 
 const Game = ({ navigation, ...props }) => {
   const [state, setState] = useState({
-    time: 10,
+    time: SECOND_PER_QUESTION,
     questionNumber: 0,
     endGame: false,
     mode: 0, // 0 = single; 1 = multiplayer (state.mode)
@@ -87,14 +87,19 @@ const Game = ({ navigation, ...props }) => {
   const displayAnswerRef = useRef();
   const gameData = navigation.state.params.gameData;
   const currentGame = gameData[state.questionNumber] || {};
-  const question = currentGame.question;
+  let question = currentGame.question;
   const correctAnswer = currentGame.correct_answer;
   const answers = currentGame.answers;
   const lastQuestion = state.questionNumber === (gameData.length - 1);
+  let gameRef;
+  let playerRef;
 
-
-  const gameRef = db.ref('/games').child(props.game.id)
-  const playerRef = db.ref('/games').child(props.game.id).child('players').child(props.game.playerId)
+  try {
+    gameRef = db.ref('/games').child(props.game.id)
+    playerRef = db.ref('/games').child(props.game.id).child('players').child(props.game.playerId)
+  } catch (e) {
+    console.error('Game - gameRef and playerRef', e)
+  }
 
   selectAnswer = (answer) => {
     const isCorrectAnswer = answer === correctAnswer;
@@ -108,6 +113,8 @@ const Game = ({ navigation, ...props }) => {
           points: points + 5
         })
       })
+    } else {
+      Vibration.vibrate(200);
     }
 
     setState(prevState => ({
@@ -140,7 +147,7 @@ const Game = ({ navigation, ...props }) => {
       if (!state.time || state.displayAnswer) {
         clearTimeout(timerRef.current)
       } else {
-        // Decrement time & display answer after 10s
+        // Decrement time & display answer after SECOND_PER_QUESTION
         setState(prevState => ({
           ...prevState,
           time: !state.time ? prevState.time : prevState.time - 1,
@@ -164,7 +171,7 @@ const Game = ({ navigation, ...props }) => {
         setState(prevState => ({
           ...prevState,
           displayAnswer: false,
-          time: 10,
+          time: SECOND_PER_QUESTION,
           selectedAnswer: '',
           questionNumber: prevState.questionNumber + 1
         }))
@@ -185,7 +192,7 @@ const Game = ({ navigation, ...props }) => {
         let player = snapshot.val();
         gameRef.child('result').push(player)
         setTimeout(() => {
-          navigation.navigate('EndGame')
+          navigation.navigate('EndGame', { gameId: props.game.id })
         }, 1000)
       })
     }
@@ -209,7 +216,7 @@ const Game = ({ navigation, ...props }) => {
           <Text style={styles.questionRemaining}>{state.questionNumber + 1}/{gameData.length}</Text>
         </View>
         <ProgressBar
-          progress={state.time / 10}
+          progress={state.time / SECOND_PER_QUESTION}
           width={width - styles.container.margin * 2}
           color='#6c63ff'
           unfilledColor='#EDEDFC'
