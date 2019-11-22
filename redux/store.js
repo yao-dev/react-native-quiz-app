@@ -4,7 +4,7 @@ import gameReducer from './reducers/game';
 const initialState = {};
 
 const reducers = combineReducers({
-  games: gameReducer
+  game: gameReducer
 })
 
 const store = createStore(reducers, initialState)

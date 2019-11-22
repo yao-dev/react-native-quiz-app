@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
 import { get } from 'lodash';
 import React from 'react';
-import { Dimensions, SafeAreaView, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Dimensions, SafeAreaView, ScrollView } from 'react-native';
+import Button from '../../components/Button';
 
 const { width, height } = Dimensions.get('window');
 
@@ -108,42 +109,12 @@ const categories = [
   }
 ]
 
-const buttonStyles = {
-  button: {
-    flexFlow: 'row wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#6c63ff',
-    width: '80%',
-    maxWidth: '80%',
-    paddingVertical: 10,
-    borderRadius: 50,
-    elevation: 5,
-  },
-  text: {
-    textTransform: 'capitalize',
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  }
-}
-
-const Button = ({ style = {}, children, ...restProps }) => {
-  return (
-    <TouchableOpacity {...restProps} style={[buttonStyles.button, style]}>
-      {typeof children !== 'string' ? children : (
-        <Text style={buttonStyles.text}>{children}</Text>
-      )}
-    </TouchableOpacity>
-  )
-}
-
 const styles = {
   safeAreaView: {
     flex: 1,
   },
   firstButton: {
-    marginBottom: 10
+    marginBottom: 10,
   }
 }
 
@@ -162,6 +133,8 @@ const SelectCategory = ({ navigation, ...props }) => {
         {categories.map((category) => {
           return (
             <Button
+              background='purple'
+              color='white'
               key={category.value}
               onPress={() => {
                 if (get(navigation, 'state.params.mode') === 'MULTI_PLAYER') {
@@ -174,6 +147,7 @@ const SelectCategory = ({ navigation, ...props }) => {
                   url: `https://opentdb.com/api.php?amount=10&category=${category.value}`
                 })
               }}
+              textStyle={{ fontSize: 16 }}
               style={styles.firstButton}
             >
               {category.text}

@@ -1,35 +1,10 @@
 import Constants from 'expo-constants';
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, Text, View } from 'react-native';
 import { connect } from 'react-redux';
+import Button from '../../components/Button';
 import { db } from '../../utils/firebase';
-
-const buttonStyles = {
-  button: {
-    flexFlow: 'row wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    width: '80%',
-    maxWidth: '80%',
-    paddingVertical: 10,
-    borderRadius: 50
-  },
-  text: {
-    textTransform: 'capitalize',
-    color: '#6c63ff',
-    fontSize: 25,
-    fontWeight: 'bold',
-  }
-}
-
-const Button = ({ style = {}, children, ...restProps }) => {
-  return (
-    <TouchableOpacity {...restProps} style={[buttonStyles.button, style]}>
-      <Text style={buttonStyles.text}>{children}</Text>
-    </TouchableOpacity>
-  )
-}
+import game from '../../utils/game';
 
 const styles = {
   safeAreaView: {
@@ -41,6 +16,7 @@ const styles = {
   },
   container: {
     flex: 1,
+    width: '100%',
     marginTop: Constants.statusBarHeight,
     justifyContent: 'space-between'
   },
@@ -70,22 +46,34 @@ const styles = {
 
 const WaitPlayer = ({ navigation, ...props }) => {
   const [state, setState] = useState({
-    players: props.players,
+    players: [],
   })
+  const gameRef = db.ref('/games').child(props.gameId);
+  const playersRef = gameRef.child('players');
+
+  const onGameChange = (snapshot) => {
+    const game = snapshot.val();
+    if (game.started) {
+      gameRef.off('value', onGameChange)
+      playersRef.off('value', onPlayerChange)
+      navigation.navigate('LoadCategory', {
+        gameId: props.gameId
+      })
+    }
+  }
+
+  const onPlayerChange = (snapshot) => {
+    setState(prevState => ({ ...prevState, players: game.formatPlayers(snapshot.val()) }))
+  }
 
   useEffect(() => {
-    db.ref('/games').child(props.gameId).on('value', (snapshot) => {
-      const game = snapshot.val();
-      if (game.start) {
-        navigation.navigate('LoadCategory', {
-          gameId: props.gameId
-        })
-      }
-    })
+    gameRef.on('value', onGameChange)
+    playersRef.on('value', onPlayerChange)
 
-    db.ref('/games').child(props.gameId).child('players').on('value', (snapshot) => {
-      setState(prevState => ({ ...prevState, players: props.getPlayers(snapshot.val()) }))
-    })
+    return () => {
+      gameRef.off('value', onGameChange)
+      playersRef.off('value', onPlayerChange)
+    }
   }, [])
 
   return (
@@ -100,18 +88,14 @@ const WaitPlayer = ({ navigation, ...props }) => {
             alignItems: 'center',
           }}
         >
-          {state.players.map((player) => {
+          {state.players && state.players.map((player) => {
             return <Text key={player.id} style={styles.playerUsername}>{player.username}</Text>
           })}
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
-            onPress={() => {
-              db.ref('/games').child(props.gameId).update({
-                start: true
-              })
-            }}
+            onPress={() => gameRef.update({ started: true })}
           >
             Start 🎮🕹
           </Button>
@@ -127,28 +111,10 @@ WaitPlayer.navigationOptions = {
 
 const mapStateToProps = (state, ownProps) => {
   const gameId = ownProps.navigation.state.params.gameId;
-  const currentGame = state.games[gameId] || {};
-  const getPlayers = (players) => Object.keys(players).map((playerId) => {
-    return {
-      id: playerId,
-      ...players[playerId]
-    }
-  })
-
-  if (!Object.keys(currentGame).length) {
-    return {
-      gameId,
-      players: [],
-      getPlayers
-    }
-  }
-
-  const players = getPlayers(currentGame.players)
 
   return {
     gameId,
-    players,
-    getPlayers
+    players: [],
   };
 }
 

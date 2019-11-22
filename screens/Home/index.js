@@ -1,35 +1,11 @@
 import Constants from 'expo-constants';
 import React, { useState } from 'react';
-import { Dimensions, Image, Modal, SafeAreaView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, Modal, SafeAreaView, Text, TextInput, View } from 'react-native';
+import { connect } from 'react-redux';
+import Button from '../../components/Button';
+import actions from '../../redux/actions/game';
 
 const { width, height } = Dimensions.get('window');
-
-const buttonStyles = {
-  button: {
-    flexFlow: 'row wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#6c63ff',
-    width: '80%',
-    maxWidth: '80%',
-    paddingVertical: 10,
-    borderRadius: 50
-  },
-  text: {
-    textTransform: 'capitalize',
-    color: '#FFF',
-    fontSize: 25,
-    fontWeight: 'bold',
-  }
-}
-
-const Button = ({ style = {}, children, ...restProps }) => {
-  return (
-    <TouchableOpacity {...restProps} style={[buttonStyles.button, style]}>
-      <Text style={buttonStyles.text}>{children}</Text>
-    </TouchableOpacity>
-  )
-}
 
 const styles = {
   safeAreaView: {
@@ -96,6 +72,7 @@ const Home = ({ navigation, ...props }) => {
 
   const joinGame = () => {
     setModal(false)
+    props.setGameId(gameId)
     navigation.navigate('NewPlayer', { gameId })
   }
 
@@ -110,18 +87,26 @@ const Home = ({ navigation, ...props }) => {
       {/* BUTTONS */}
       <View style={styles.buttonContainer}>
         <Button
+          background='purple'
+          color='white'
           onPress={() => navigation.navigate('SelectCategory')}
           style={styles.spaceBottom}
         >
           single player
         </Button>
         <Button
+          background='purple'
+          color='white'
           style={styles.spaceBottom}
           onPress={() => navigation.navigate('SelectCategory', { mode: 'MULTI_PLAYER' })}
         >
           multi player
         </Button>
-        <Button onPress={() => setModal(true)}>
+        <Button
+          background='purple'
+          color='white'
+          onPress={() => setModal(true)}
+        >
           join game
         </Button>
       </View>
@@ -145,6 +130,8 @@ const Home = ({ navigation, ...props }) => {
               onSubmitEditing={joinGame}
             />
             <Button
+              background='purple'
+              color='white'
               onPress={joinGame}
             >
               join
@@ -160,4 +147,13 @@ Home.navigationOptions = {
   header: null
 }
 
-export default Home;
+mapDispatchToProps = (dispatch) => {
+  return {
+    setGameId: (gameId) => dispatch(actions.setGameId(gameId))
+  }
+}
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(Home);

@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { get } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, KeyboardAvoidingView, SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { connect } from 'react-redux';
 import actions from '../../redux/actions/game';
@@ -85,34 +85,43 @@ const styles = {
 const NewPlayer = ({ navigation, ...props }) => {
   const [username, setUsername] = useState('')
 
+  const gameId = get(navigation, 'state.params.gameId')
+  const isCreator = get(navigation, 'state.params.creator')
+  const categoryUrl = get(navigation, 'state.params.url')
+
   const joinGame = async () => {
-    let gameId = get(navigation, 'state.params.gameId');
-
-    if (get(navigation, 'state.params.creator')) {
-      const categoryUrl = get(navigation, 'state.params.url')
-      gameId = await game.create(categoryUrl)
-      // JOIN THE GAME
-      game.addPlayer({
-        owner: true,
-        username,
-        gameId,
-      })
-
-      // GO TO INVITE PLAYER
-      return navigation.navigate('InvitePlayer', {
-        id: gameId,
-        url: get(navigation, 'state.params.url'),
-      })
-    }
-
     // JOIN THE GAME
-    game.addPlayer({
+    props.addPlayer({
       username,
       gameId,
     })
 
     // GO TO INVITE WAIT PLAYER
     return navigation.navigate('WaitPlayer', { gameId })
+  }
+
+  // GO TO INVITE PLAYER
+  useEffect(() => {
+    if (isCreator && props.game.id) {
+      props.addPlayer({
+        owner: true,
+        username,
+        gameId: props.game.id,
+      })
+
+      navigation.navigate('InvitePlayer', {
+        id: props.game.id,
+        url: categoryUrl,
+      })
+    }
+  }, [props.game.id])
+
+  const onSubmit = async () => {
+    if (isCreator) {
+      await props.createGame(categoryUrl)
+    } else {
+      await joinGame()
+    }
   }
 
   return (
@@ -133,9 +142,9 @@ const NewPlayer = ({ navigation, ...props }) => {
               autoCapitalize='none'
               autoCorrect={false}
               onChangeText={setUsername}
-              onSubmitEditing={joinGame}
+              onSubmitEditing={onSubmit}
             />
-            <Button onPress={joinGame}>
+            <Button onPress={onSubmit}>
               save
             </Button>
           </View>
@@ -151,11 +160,19 @@ NewPlayer.navigationOptions = {
 
 const mapDispatchToProps = (dispatch) => {
   return {
+    createGame: async (categoryUrl) => {
+      const gameId = await game.create(categoryUrl)
+      return dispatch(actions.setGameId(gameId))
+    },
+    addPlayer: async (player) => {
+      const { id } = await game.addPlayer(player)
+      return dispatch(actions.setPlayerId(id))
+    },
     gamePlayersUpdate: (gameUpdated) => dispatch(actions.gamePlayersUpdate(gameUpdated))
   }
 }
 
 export default connect(
-  null,
+  state => state,
   mapDispatchToProps
 )(NewPlayer);

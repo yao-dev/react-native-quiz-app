@@ -22,6 +22,7 @@ const create = async (categoryUrl) => {
 const addPlayer = (player) => {
   const newPlayer = {
     createdAt: new Date(),
+    points: 0,
     ...player
   }
   // ADD PLAYER TO GAME
@@ -62,7 +63,7 @@ const fetchQuestions = async (url) => {
     if (data.results) {
       results = data.results.map((result) => {
         result.answers = [result.correct_answer].concat(result.incorrect_answers);
-        result.answers.disorder();
+        // result.answers.disorder();
 
         delete result.incorrect_answers;
 
@@ -76,11 +77,21 @@ const fetchQuestions = async (url) => {
   }
 }
 
+const formatPlayers = (players) => {
+  return Object.keys(players).map((playerId) => {
+    return {
+      id: playerId,
+      ...players[playerId]
+    }
+  })
+}
+
 export default {
   create,
   addPlayer,
   getPlayer,
   getPlayers,
   join,
-  getById
+  getById,
+  formatPlayers
 }

@@ -12,7 +12,6 @@ const LoadCategory = ({ navigation, ...props }) => {
       const gameId = navigation.state.params.gameId;
       db.ref('/games').child(gameId).once('value', (snapshot) => {
         const game = snapshot.val()
-        console.log(game)
         setGameData(game.questions)
       })
     })()

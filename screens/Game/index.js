@@ -1,6 +1,10 @@
+import moment from 'moment';
 import React, { useEffect, useRef, useState } from 'react';
-import { Dimensions, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Text, View } from 'react-native';
 import ProgressBar from 'react-native-progress/Bar';
+import { connect } from 'react-redux';
+import Button from '../../components/Button';
+import { db } from '../../utils/firebase';
 
 const { width } = Dimensions.get('window');
 
@@ -52,19 +56,6 @@ const styles = {
     paddingLeft: 20,
     borderRadius: 50,
     marginBottom: 10,
-    ...Platform.select({
-      ios: {
-        shadowOffset: {
-          width: 4,
-          height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 3,
-      },
-      android: {
-        elevation: 5,
-      }
-    }),
   },
   answerButtonCorrect: {
     backgroundColor: '#4cd137',
@@ -90,6 +81,7 @@ const Game = ({ navigation, ...props }) => {
     mode: 0, // 0 = single; 1 = multiplayer (state.mode)
     displayAnswer: false,
     selectedAnswer: '',
+
   })
   const timerRef = useRef();
   const displayAnswerRef = useRef();
@@ -98,42 +90,76 @@ const Game = ({ navigation, ...props }) => {
   const question = currentGame.question;
   const correctAnswer = currentGame.correct_answer;
   const answers = currentGame.answers;
+  const lastQuestion = state.questionNumber === (gameData.length - 1);
+
+
+  const gameRef = db.ref('/games').child(props.game.id)
+  const playerRef = db.ref('/games').child(props.game.id).child('players').child(props.game.playerId)
 
   selectAnswer = (answer) => {
+    const isCorrectAnswer = answer === correctAnswer;
+
+    if (isCorrectAnswer) {
+      let points;
+
+      playerRef.once('value', snapshot => {
+        points = snapshot.val().points;
+        playerRef.update({
+          points: points + 5
+        })
+      })
+    }
+
     setState(prevState => ({
       ...prevState,
       displayAnswer: true,
-      selectedAnswer: answer
+      selectedAnswer: answer,
+      endGame: lastQuestion
     }))
   }
 
-  useEffect(() => {
+  const startPlaying = () => {
+    setState(prevState => ({ ...prevState, startTime: moment() }))
+    playerRef.update({
+      isPlaying: true,
+      gameComplete: false,
+    })
+  }
+
+  const endPlaying = () => {
+    playerRef.update({
+      isPlaying: false,
+      gameComplete: true,
+      scoreTime: moment().diff(state.startTime)
+    })
+  }
+
+  const handleGame = () => {
     timerRef.current = setTimeout(() => {
-      // END GAME
-      if (state.questionNumber === (gameData.length - 1)) {
+      // Clear timer after time finish or after displayed the answer
+      if (!state.time || state.displayAnswer) {
         clearTimeout(timerRef.current)
-        setState(prevState => ({
-          ...prevState,
-          displayAnswer: true,
-          endGame: true
-        }))
       } else {
-        if (!state.time || state.displayAnswer) return clearTimeout(timerRef.current)
+        // Decrement time & display answer after 10s
         setState(prevState => ({
           ...prevState,
           time: !state.time ? prevState.time : prevState.time - 1,
           displayAnswer: !(prevState.time - 1),
+          endGame: lastQuestion && !(prevState.time - 1)
         }))
       }
     }, 1000)
+
     return () => {
       clearTimeout(timerRef.current)
     }
-  }, [state.time, state.displayAnswer]);
+  }
 
-  useEffect(() => {
-    if (state.displayAnswer && state.questionNumber < (gameData.length - 1)) {
-      displayAnswerRef.current = setTimeout(() => {
+  const resetGameForNextQuestion = () => {
+    displayAnswerRef.current = setTimeout(() => {
+      let shouldResetForNextQuestion = state.displayAnswer && state.questionNumber < (gameData.length - 1)
+
+      if (shouldResetForNextQuestion) {
         clearTimeout(displayAnswerRef.current)
         setState(prevState => ({
           ...prevState,
@@ -142,24 +168,37 @@ const Game = ({ navigation, ...props }) => {
           selectedAnswer: '',
           questionNumber: prevState.questionNumber + 1
         }))
-      }, 1000)
-    }
-
-    if (state.endGame) {
-      setInterval(() => {
-        navigation.navigate('EndGame')
-      }, 1000)
-    }
+      }
+    }, 1000)
 
     return () => {
       clearTimeout(displayAnswerRef.current)
     }
-  }, [state.displayAnswer, state.endGame]);
+  }
 
-  // Prevent to display question/answer when game is finish
-  // if (state.questionNumber + 1 === gameData.length) {
-  //   // return navigation.navigate('EndGame')
-  // }
+  const handleEndGame = () => {
+    if (state.endGame) {
+      // Player complete game
+      endPlaying()
+      // Save player's result & go to EndGame
+      playerRef.once('value', snapshot => {
+        let player = snapshot.val();
+        gameRef.child('result').push(player)
+        setTimeout(() => {
+          navigation.navigate('EndGame')
+        }, 1000)
+      })
+    }
+  }
+
+  // IS START PLAYING
+  useEffect(startPlaying, [])
+  // HANDLE GAME
+  useEffect(handleGame, [state.time, state.displayAnswer]);
+  // RESET GAME FOR NEXT QUESTION
+  useEffect(resetGameForNextQuestion, [state.displayAnswer]);
+  // HANDLE END GAME
+  useEffect(handleEndGame, [state.endGame])
 
   return (
     <View style={styles.container}>
@@ -189,8 +228,9 @@ const Game = ({ navigation, ...props }) => {
 
         // ANSWER BUTTONS
         return (
-          <TouchableOpacity
+          <Button
             key={answer}
+            background='white'
             onPress={() => selectAnswer(answer)}
             disabled={state.displayAnswer}
             style={[
@@ -202,7 +242,7 @@ const Game = ({ navigation, ...props }) => {
             <Text style={styles.answer}>
               <Text style={styles.answerIndex}>{letters[answerNumber]}.</Text> <Text style={styles.answerText}>{answer}</Text>
             </Text>
-          </TouchableOpacity>
+          </Button>
         )
       })}
     </View>
@@ -213,4 +253,4 @@ Game.navigationOptions = {
   title: 'QUIZ'
 }
 
-export default Game;
+export default connect(state => state)(Game);

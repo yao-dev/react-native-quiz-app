@@ -3,35 +3,9 @@ import Constants from 'expo-constants';
 import React, { useEffect, useRef, useState } from 'react';
 import { Clipboard, Dimensions, Image, SafeAreaView, Share, Text, TouchableOpacity, Vibration, View } from 'react-native';
 import Toast from 'react-native-root-toast';
+import Button from '../../components/Button';
 
 const { width, height } = Dimensions.get('window');
-
-const buttonStyles = {
-  button: {
-    flexFlow: 'row wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#6c63ff',
-    width: '80%',
-    maxWidth: '80%',
-    paddingVertical: 10,
-    borderRadius: 50
-  },
-  text: {
-    textTransform: 'capitalize',
-    color: '#FFF',
-    fontSize: 25,
-    fontWeight: 'bold',
-  }
-}
-
-const Button = ({ style = {}, children, ...restProps }) => {
-  return (
-    <TouchableOpacity {...restProps} style={[buttonStyles.button, style]}>
-      <Text style={buttonStyles.text}>{children}</Text>
-    </TouchableOpacity>
-  )
-}
 
 const styles = {
   safeAreaView: {
@@ -151,12 +125,16 @@ const InvitePlayer = ({ navigation, ...props }) => {
           <Text style={styles.gameId}>{gameId}</Text>
         </TouchableOpacity>
         <Button
+          background='purple'
+          color='white'
           onPress={onShare}
           style={styles.firstButton}
         >
           share
         </Button>
         <Button
+          background='purple'
+          color='white'
           onPress={() => navigation.navigate('WaitPlayer', { gameId })}
         >
           Next 🎮🕹
