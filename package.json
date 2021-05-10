@@ -12,7 +12,7 @@
     "expo": "^35.0.0",
     "expo-constants": "~7.0.0",
     "firebase": "^7.3.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "moment": "^2.24.0",
     "react": "16.8.3",
     "react-dom": "16.8.3",
